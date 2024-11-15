@@ -1,54 +1,85 @@
+import { likes } from "../dataBase/Likes";
+import { tweets } from "../dataBase/Tweets";
 import { Base } from "./Base";
 import { Like } from "./Like";
 import { User } from "./User";
 
-type TweetType = "normal" | "reply"; 
+export type TypeTweet = "normal" | "reply";
 
 export class Tweet extends Base {
-    public content: string;
-    public type: TweetType;
-    private _fromUser: User;
-    private _likes: Like[] = [];  
-    private _replies: Tweet[] = [];  
+    protected _content: string;
+    private _author: User;  
+    private _type: TypeTweet;
+    private _replies: Tweet[] = [];
 
-    constructor(content: string, type: TweetType, fromUser: User) {
+    constructor(content: string, author: User, type: TypeTweet = "normal") {
         super();
-
-        if (!content) {
-            throw new Error("Conteúdo não pode ser vazio !");
-        }
-
-        if (type !== "normal" && type !== "reply") {
-            throw new Error("Tipo de tweet inválido !");
-        }
-
-        this.content = content;
-        this.type = type;
-        this._fromUser = fromUser;
+        this._content = content;
+        this._author = author;
+        this._type = type;
     }
 
-    // Método para responder a um tweet
-    public reply(content: string): void {
-        const replyTweet = new Tweet(content, "reply", this._fromUser);
+    public get content(): string {
+        return this._content;
+    }
+
+    public get getAuthor(): User {
+        return this._author;
+    }
+
+    public like(user: User): void {
+        if (user.username === this._author.username) {
+            console.log(`\n           @${user.username} não pode curtir o próprio tweet!\n`);
+            console.log("------------------------------------------");
+            return; 
+        }
+    
+        const alreadyLiked = likes.some(like => like.getUser().username === user.username && like.getTweet() === this);
+        if (alreadyLiked) {
+            console.log(`\n@${user.username} já curtiu este tweet!\n`);
+            console.log("------------------------------------------");
+            return;
+        }
+    
+        const like = new Like(user, this);
+        likes.push(like);
+        console.log(`\n         @${user.username} curtiu o tweet!               \n`);
+    }
+                
+    public reply(content: string, user: User): void {
+        const replyTweet = new Tweet(content, user, "reply");
         this._replies.push(replyTweet);
+        tweets.push(replyTweet)
+        console.log(`\n         @${user.username} respondeu ao tweet!\n`);
     }
 
-    // Método para curtir um tweet
-    public like(): void {
-        const like = new Like(this._fromUser, this);  // Cria uma nova instância de Like associada ao usuário e ao tweet
-        this._likes.push(like);  // Adiciona o like à coleção de likes
-    }
-
-    // Método para mostrar o conteúdo do tweet
     public show(): void {
-        console.log(`${this._fromUser.username}: ${this.content} (Likes: ${this._likes})`);
+        this.showLike();
+        this.showReplies();
     }
 
-    // Método para mostrar todas as respostas ao tweet
+    public showLike(): void {
+        console.log(`\x1b[44;5;82m@${this._author.username}:\x1b[0m \x1b[38;5;82m${this._content}\x1b[0m`);
+        
+        const tweetLikes = likes.filter(like => like.getTweet() === this);
+        const likeCount = tweetLikes.length;
+    
+        if (likeCount === 1) {
+            const firstLiker = tweetLikes[0].getUser().username; 
+            console.log(`[@${firstLiker} liked this]`);
+        } else if (likeCount > 1) {
+            const firstLiker = tweetLikes[0].getUser().username; 
+            console.log(`[@${firstLiker} and other ${likeCount - 1} liked this]`);
+        } 
+    }        
+
     public showReplies(): void {
-        console.log("Replies:");
-        this._replies.forEach(reply => {
-            reply.show();
-        });
+        const relevantReplies = tweets.filter(reply => this._replies.includes(reply));
+        
+        if (relevantReplies.length > 0) {
+            relevantReplies.forEach(reply => 
+                console.log(`   > @${reply._author.username}: ${reply._content}`)
+            );
+        } 
     }
-}
+}    

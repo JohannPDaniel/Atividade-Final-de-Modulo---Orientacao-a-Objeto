@@ -10,4 +10,8 @@ export abstract class Base {
     public get id() : string {
         return this._id;
     }
+
+    public show(): void {
+        
+    }
 }

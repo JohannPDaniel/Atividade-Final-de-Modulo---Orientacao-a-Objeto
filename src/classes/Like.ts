@@ -1,6 +1,6 @@
-import { Base } from "./Base";
-import { Tweet } from "./Tweet";
 import { User } from "./User";
+import { Tweet } from "./Tweet";
+import { Base } from "./Base";
 
 export class Like extends Base {
     private _user: User;
@@ -11,13 +11,12 @@ export class Like extends Base {
         this._user = user;
         this._tweet = tweet;
     }
-    
-    public get getUserLike() : User {
+
+    public getUser(): User {
         return this._user;
     }
 
-    public get getTweetLike(): Tweet {
+    public getTweet(): Tweet {
         return this._tweet;
     }
-    
 }
